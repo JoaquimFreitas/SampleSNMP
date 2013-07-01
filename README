@@ -1,0 +1,5 @@
+
+smallfiles/  -- small-snmp files.
+s4jfiles/    -- snmp4j working files incl test files and libraries.
+perlfiles/   -- perl snmp mib compiler.
+
