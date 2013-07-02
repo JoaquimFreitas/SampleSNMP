@@ -25,18 +25,41 @@ import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.snmp4j.util.MultiThreadedMessageDispatcher;
 import org.snmp4j.util.ThreadPool;
+//import java.io.IOException;
+import org.snmp4j.TransportStateReference;
+import org.snmp4j.smi.Address;
+import java.nio.ByteBuffer;
 
 public class TrapReceiver implements CommandResponder {
 
     public static void main(String[] args) {
         TrapReceiver snmp4jTrapReceiver = new TrapReceiver();
         try {
-            snmp4jTrapReceiver.listen(new UdpAddress("localhost/162"));
+            snmp4jTrapReceiver.listen(new UdpAddress("localhost/2162"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /* helper to capture udp sending packets. */
+    class DefaultUdpTransportMappingCap extends DefaultUdpTransportMapping {
+        public DefaultUdpTransportMappingCap(UdpAddress uA) throws IOException {
+            super(uA);
+        }
+        @Override
+        protected void fireProcessMessage(Address address,  ByteBuffer buf,
+                                          TransportStateReference tmStateRef) {
+            System.out.printf("  byte len %d ", buf.array().length);
+            for (int i=0; i<buf.array().length; i++) {
+                if ( (i % 16) == 0 ) { System.out.printf("\n  byte %3d  ", i); }
+                if ( (i % 4) == 0 ) { System.out.printf(" "); }
+                System.out.printf(" %02x", buf.array()[i]);
+            }
+                System.out.printf("\n");
+            super.fireProcessMessage(address, buf, tmStateRef);
+        }
+    }
+    
     /**
      * Trap Listner
      */
@@ -46,7 +69,7 @@ public class TrapReceiver implements CommandResponder {
         if (address instanceof TcpAddress) {
             transport = new DefaultTcpTransportMapping((TcpAddress) address);
         } else {
-            transport = new DefaultUdpTransportMapping((UdpAddress) address);
+            transport = new DefaultUdpTransportMappingCap((UdpAddress) address);
         }
 
         ThreadPool threadPool = ThreadPool.create("DispatcherPool", 10);
