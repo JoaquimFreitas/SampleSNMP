@@ -135,6 +135,10 @@ close($fh);
                                           $prefix.".".$foundname, $foundoid, 
                                              "x ".$tablerange." ".$tableindex];
                     }
+                } elsif ($foundname && $foundoid) {
+                    #printf("                     n\n");
+                    push @{$blkref}, ["nao", $i, $lvl, $foundperm, 
+                                      $prefix.".".$foundname, $foundoid];
                 } elsif ($foundname) {
                     #printf("                     n\n");
                     push @{$blkref}, ["name", $i, $lvl, $foundperm, 
@@ -163,6 +167,9 @@ if ( $rel < scalar @lines ) { printf("\n\n lines consumed %d\n\n", $rel); }
             }
             if ( $elm[0] eq "name" ) {
                 printf(" name %3d %3d %3s %-8s %s\n",$elm[1]+1,$elm[2],$elm[3],"", $elm[4]);
+            } elsif ( $elm[0] eq 'nao' ) {
+                printf(" nao %3d %3d %3s %-8s %-66s %-11s\n", 
+                            $elm[1]+1, $elm[2], $elm[3],"", $elm[4], $elm[5]);
             } elsif ( $elm[0] eq 'nor' ) {
                 printf(" nor %3d %3d %3s %-8s %-66s %-11s %s\n", 
                             $elm[1]+1, $elm[2], $elm[3],"", $elm[4], $elm[5], $elm[6]);
@@ -190,7 +197,7 @@ if ( $rel < scalar @lines ) { printf("\n\n lines consumed %d\n\n", $rel); }
         my $showwalk = 0;
         for ( my $i=0; $i <= $#blk; $i++ ) {
             my @elm = @{$blk[$i]};
-            if ( $elm[0] eq "name" || $elm[0] eq 'nor' || 
+            if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
                  $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
                 push @{$retref}, $blk[$i];
@@ -216,7 +223,7 @@ walktree($ret, $flat);
         for ( my $i=0; $i <= $#blk; $i++ ) {
             my @elm = @{$blk[$i]};
             push @{$retref}, $blk[$i];
-            if ( $elm[0] eq "name" || $elm[0] eq 'nor' || 
+            if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
                  $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
                 showelems(@elm) if ( $showwalk );
@@ -298,7 +305,7 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
         my $levelbase = 0;
         for ( my $i=0; $i <= $#blk; $i++ ) {
             my @elm = @{$blk[$i]};
-            if ( $elm[0] eq "name" || $elm[0] eq 'nor' || 
+            if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
                  $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
                 showelems(@elm) if ( $showwalk );
@@ -371,12 +378,12 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
         my $levelbase = 0;
         for ( my $i=0; $i <= $#blk; $i++ ) {
             my @elm = @{$blk[$i]};
-            if ( $elm[0] eq "name" || $elm[0] eq 'nor' || 
+            if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
                  $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
                 showelems(@elm) if ( $showwalk );
                 if ( $state == 0 &&   # look for name $kwrd
-                     $elm[0] eq "name" && $elm[4] =~ m/^\s*$kwrd\.ifTable\s*$/ ) {
+                     $elm[0] eq "nao" && $elm[4] =~ m/^\s*$kwrd\.ifTable\s*$/ ) {
                     $state = 2;
                 #} elsif ( $state == 1 &&   # look for ifTable
                 #          $elm[0] eq "name" && 

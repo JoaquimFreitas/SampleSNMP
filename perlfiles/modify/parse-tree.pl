@@ -134,6 +134,10 @@ close($fh);
                                           $prefix.".".$foundname, $foundoid, 
                                              "x ".$tablerange." ".$tableindex];
                     }
+                } elsif ($foundname && $foundoid) {
+                    #printf("                     n\n");
+                    push @{$blkref}, ["nao", $i, $lvl, $foundperm, 
+                                      $prefix.".".$foundname, $foundoid];
                 } elsif ($foundname) {
                     #printf("                     n\n");
                     push @{$blkref}, ["name", $i, $lvl, $foundperm, 
@@ -161,6 +165,9 @@ if ( $rel < scalar @lines ) { printf("\n\n lines consumed %d\n\n", $rel); }
             my @elm = @{$blk[$i]};
             if ( $elm[0] eq "name" ) {
                 printf(" name %3d %3d %3s %-8s %s\n",$elm[1]+1,$elm[2],$elm[3],"", $elm[4]);
+            } elsif ( $elm[0] eq 'nao' ) {
+                printf(" nao %3d %3d %3s %-8s %-66s %-11s\n", 
+                            $elm[1]+1, $elm[2], $elm[3],"", $elm[4], $elm[5]);
             } elsif ( $elm[0] eq 'nor' ) {
                 printf(" nor %3d %3d %3s %-8s %-66s %-11s %s\n", 
                             $elm[1]+1, $elm[2], $elm[3],"", $elm[4], $elm[5], $elm[6]);
