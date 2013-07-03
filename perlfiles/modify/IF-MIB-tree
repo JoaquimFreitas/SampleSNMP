@@ -28,10 +28,10 @@ ifMIB
               +3-- P-r-  TTimeTcks  AOid[1.3.6.1.2.1.31.1.1.1.19]  NifCounterDiscontinuityTime(19)
       +1-- P---  T AOid[1.3.6.1.2.1.31.1.2]  NifStackTable(2)
           |
-          +2-- P---  T ATableIndex[ifStackHigherLayer,ifStackLowerLayer]  ATableRange[norange,norange]  AOid[1.3.6.1.2.1.31.1.2.1]  NifStackEntry(1)
+          +2-- P---  T ATableIndex[ifStackHigherLayer,ifStackLowerLayer]  ATableRange[1-7,1-7]  AOid[1.3.6.1.2.1.31.1.2.1]  NifStackEntry(1)
               |
-              +3-- P---  TInt32     AOid[1.3.6.1.2.1.31.1.2.1.1]  NifStackHigherLayer(1)
-              +3-- P---  TInt32     AOid[1.3.6.1.2.1.31.1.2.1.2]  NifStackLowerLayer(2)
+              +3-- P---  TInt32       AIntRange[0001-0007]    AOid[1.3.6.1.2.1.31.1.2.1.1]  NifStackHigherLayer(1)
+              +3-- P---  TInt32       AIntRange[0001-0007]    AOid[1.3.6.1.2.1.31.1.2.1.2]  NifStackLowerLayer(2)
               +3-- Pcr-  TInteger   AOid[1.3.6.1.2.1.31.1.2.1.3]  NifStackStatus(3)
       +1-- P---  T AOid[1.3.6.1.2.1.31.1.3]  NifTestTable(3)
           |

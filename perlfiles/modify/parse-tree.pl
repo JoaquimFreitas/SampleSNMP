@@ -80,7 +80,7 @@ close($fh);
                 my ($foundtype, $foundname, $foundoid) = ("", "", "");
                 my $strsize=0;
                 my ($tablerange, $tableindex) = ("", "");
-                my $enumdef="";
+                my ($enumdef, $intrange) = ("", "");
                 for (my $k=0; $k<= $#elements; $k++) {
                     #printf("        ==%s==\n", $elements[$k]);
                     my $e = $elements[$k];
@@ -100,6 +100,10 @@ close($fh);
                     if ( $e =~ m/^\s*AEnum\[([\w\;\:]+)\]\s*$/ ) { 
                         $enumdef = $1; 
                     }
+                    if ( $e =~ 
+                          m/^\s*AIntRange\[(([\d\-]+\-[\d\-]+)|\w+)\]\s*$/ ) { 
+                        $intrange = $1; 
+                    }
                     if ( $foundoid ) { $foundoid =~ s/$cfg_skip_oid_prefix//; }
                 }
                 #printf("        ==%s==%s==%s==%s==\n", $foundtype, $foundname, 
@@ -116,6 +120,11 @@ close($fh);
                             ["tnoe", $i, $lvl, $foundperm, 
                              $foundtype, $prefix.".".$foundname, 
                                                         $foundoid, $enumdef];
+                    } elsif ( length($intrange) > 0 ) {
+                        push @{$blkref}, 
+                            ["tnor", $i, $lvl, $foundperm, 
+                             $foundtype, $prefix.".".$foundname, 
+                                                        $foundoid, $intrange];
                     } else {
                         push @{$blkref}, 
                             ["tno", $i, $lvl, $foundperm, 
@@ -182,6 +191,9 @@ if ( $rel < scalar @lines ) { printf("\n\n lines consumed %d\n\n", $rel); }
                        $elm[1]+1, $elm[2], $elm[3], $elm[4], $elm[5], $elm[6], $elm[7]);
             } elsif ( $elm[0] eq 'tnoe' ) {
                 printf(" tnoe %3d %3d %3s %-8s %-66s %-11s %s\n", 
+                       $elm[1]+1, $elm[2], $elm[3], $elm[4], $elm[5], $elm[6], $elm[7]);
+            } elsif ( $elm[0] eq 'tnor' ) {
+                printf(" tnor %3d %3d %3s %-8s %-66s %-11s %s\n", 
                        $elm[1]+1, $elm[2], $elm[3], $elm[4], $elm[5], $elm[6], $elm[7]);
             } elsif ( $elm[0] eq 'blk' ) {
                 #printf(" --blk  %3d %3d %3s \n", $elm[1]+1, $elm[2], $elm[3]);

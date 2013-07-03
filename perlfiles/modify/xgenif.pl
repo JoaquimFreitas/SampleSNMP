@@ -81,7 +81,7 @@ close($fh);
                 my ($foundtype, $foundname, $foundoid) = ("", "", "");
                 my $strsize=0;
                 my ($tablerange, $tableindex) = ("", "");
-                my $enumdef="";
+                my ($enumdef, $intrange) = ("", "");
                 for (my $k=0; $k<= $#elements; $k++) {
                     #printf("        ==%s==\n", $elements[$k]);
                     my $e = $elements[$k];
@@ -101,6 +101,10 @@ close($fh);
                     if ( $e =~ m/^\s*AEnum\[([\w\;\:]+)\]\s*$/ ) { 
                         $enumdef = $1; 
                     }
+                    if ( $e =~ 
+                          m/^\s*AIntRange\[(([\d\-]+\-[\d\-]+)|\w+)\]\s*$/ ) { 
+                        $intrange = $1; 
+                    }
                     if ( $foundoid ) { $foundoid =~ s/$cfg_skip_oid_prefix//; }
                 }
                 #printf("        ==%s==%s==%s==%s==\n", $foundtype, $foundname, 
@@ -117,6 +121,11 @@ close($fh);
                             ["tnoe", $i, $lvl, $foundperm, 
                              $foundtype, $prefix.".".$foundname, 
                                                         $foundoid, $enumdef];
+                    } elsif ( length($intrange) > 0 ) {
+                        push @{$blkref}, 
+                            ["tnor", $i, $lvl, $foundperm, 
+                             $foundtype, $prefix.".".$foundname, 
+                                                        $foundoid, $intrange];
                     } else {
                         push @{$blkref}, 
                             ["tno", $i, $lvl, $foundperm, 
@@ -185,6 +194,9 @@ if ( $rel < scalar @lines ) { printf("\n\n lines consumed %d\n\n", $rel); }
             } elsif ( $elm[0] eq 'tnoe' ) {
                 printf(" tnoe %3d %3d %3s %-8s %-66s %-11s %s\n", 
                        $elm[1]+1, $elm[2], $elm[3], $elm[4], $elm[5], $elm[6], $elm[7]);
+            } elsif ( $elm[0] eq 'tnor' ) {
+                printf(" tnor %3d %3d %3s %-8s %-66s %-11s %s\n", 
+                       $elm[1]+1, $elm[2], $elm[3], $elm[4], $elm[5], $elm[6], $elm[7]);
             } else {
                 printf(" Error: Unknown element : %s\n", $elm[0]);
                 die " Error: Unknown element\n";
@@ -199,7 +211,7 @@ if ( $rel < scalar @lines ) { printf("\n\n lines consumed %d\n\n", $rel); }
             my @elm = @{$blk[$i]};
             if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
-                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
+                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe' || $elm[0] eq 'tnor'  ) {
                 push @{$retref}, $blk[$i];
                 showelems(@elm) if ( $showwalk );
             } elsif ( $elm[0] eq 'blk' ) {
@@ -234,9 +246,15 @@ walktree($ret, $flat);
         }
     }
 
-my $flat2 = [];
-walkflat($flat, $flat2);
-printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
+if ( 0 ) { #walk through flat, clone into flat2, then print the sizes of them
+  printf("\n");
+  printf("#if (0) /* dump intermediate list */\n");
+  my $flat2 = [];
+  walkflat($flat, $flat2);
+  printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
+  printf("#endif /* dump intermediate list */\n");
+  printf("\n");
+}
 
     sub decodeoid {
         my $str = shift;
@@ -303,11 +321,21 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
         my $showelem = 0;
         my $state = 0;
         my $levelbase = 0;
+
+        my $fh = undef;
+        my $ofile = "hostdevspec.h";
+        my $rc = open($fh, ">", $ofile);
+        if ( ! $rc ) {
+            print "Error open file $ofile\n";
+            die "Error open file $ofile\n";
+        }
+        print $fh "/*\n * hostdevspec.h\n */\n\n";
+
         for ( my $i=0; $i <= $#blk; $i++ ) {
             my @elm = @{$blk[$i]};
             if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
-                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
+                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe' || $elm[0] eq 'tnor'){
                 showelems(@elm) if ( $showwalk );
               # tno 78 0 1 Int8 interfaces.ifNumber  .2.1       
                 if ( $state == 0 &&   # look for name interfaces.ifNumber
@@ -324,7 +352,9 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
                           defined($elm[5]) && 
                           $elm[5] =~ m/^\s*$kwrd\.\w+.*$/ ) {
                     my @oid = (0, 0, 0, 0);
-                    my ($typ, $nam, $dim) = ("known_type", "known_name", 0);
+                    my ($typ, $nam, $dim) = 
+                              ("unknown_type", "unknown_name", "unknown_dim");
+                    my $dimtype = "unknown_dim";
                     my $perm = 0;
                     if ( $elm[0] eq 'tno' ) {
                          printf(" %40s host dev tno  %s  %s  %s\n", "", 
@@ -339,22 +369,33 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
                          $typ = $elm[4];
                          @oid = decodeoid( $elm[6] );
                          $nam = decodename( $elm[5] );
-                         $dim = decodedim( $elm[7] );
+                         $dim = decodedim( $elm[7] ); $dimtype = "strsize";
                          $perm = $elm[3];
                     } elsif ( $elm[0] eq 'tnoe' ) {
                          printf(" %40s host dev tnoe %s  %s  %s\n", "", 
                                 $elm[4], $elm[6], $elm[5]) if ($showelem);
-                         $typ = $elm[4]."Enum";
+                         $typ = $elm[4];
                          @oid = decodeoid( $elm[6] );
                          $nam = decodename( $elm[5] );
+                         $dim = $elm[7]; $dimtype = "enum";
+                         $perm = $elm[3];
+                    } elsif ( $elm[0] eq 'tnor' ) {
+                         printf(" %40s host dev tnor %s  %s  %s\n", "", 
+                                $elm[4], $elm[6], $elm[5]) if ($showelem);
+                         $typ = $elm[4];
+                         @oid = decodeoid( $elm[6] );
+                         $nam = decodename( $elm[5] );
+                         $dim = $elm[7]; $dimtype = "intrange";
                          $perm = $elm[3];
                     } else {
                         $state = 9;
                     }
                     if ( isvalidoid(@oid) ) {
-                        printf(" %d, %d, %d, %d, %d, %s, %s, %s\n",
+                        print $fh sprintf(
+                            " %s %d, %d, %d, %d, %d, %s, %s, %s, \"%s\" %s\n",
+                                "host_dev_def(", 
                                 $perm, $oid[0], $oid[1], $oid[2], $oid[3], 
-                                $typ, $nam, $dim);
+                                $typ, $nam, $dimtype, $dim, ")");
                     }
                 } elsif ( $state == 6 ) {
                         $state = 9;
@@ -366,6 +407,7 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
                 die " Error: Unknown element\n";
             }
         }
+        close $fh;
     }
 
     sub walkflathostif {
@@ -376,14 +418,24 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
         my $showelem = 0;
         my $state = 0;
         my $levelbase = 0;
+
+        my $fh = undef;
+        my $ofile = "hostifspec.h";
+        my $rc = open($fh, ">", $ofile);
+        if ( ! $rc ) {
+            print "Error open file $ofile\n";
+            die "Error open file $ofile\n";
+        }
+        print $fh "/*\n * hostifspec.h\n */\n\n";
+
         for ( my $i=0; $i <= $#blk; $i++ ) {
             my @elm = @{$blk[$i]};
             if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
-                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
+                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe' || $elm[0] eq 'tnor'){
                 showelems(@elm) if ( $showwalk );
                 if ( $state == 0 &&   # look for name $kwrd
-                     $elm[0] eq "nao" && $elm[4] =~ m/^\s*$kwrd\.ifTable\s*$/ ) {
+                    $elm[0] eq "nao" && $elm[4] =~ m/^\s*$kwrd\.ifTable\s*$/){
                     $state = 2;
                 #} elsif ( $state == 1 &&   # look for ifTable
                 #          $elm[0] eq "name" && 
@@ -398,37 +450,50 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
                           $elm[2] >= $levelbase && 
                           $elm[5] =~ m/^\s*$kwrd\.\w+.*$/ ) {
                     my @oid = (0, 0, 0, 0);
-                    my ($typ, $nam, $dim) = ("known_type", "known_name", 0);
+                    my ($typ, $nam, $dim) = 
+                                ("unknown_type", "known_name", "unknown_dim");
+                    my $dimtype = "unknown_dim";
                     my $perm = 0;
                     if ( $elm[0] eq 'tno' ) {
-                         printf(" %40s host dev tno  %s  %s  %s\n", "", 
+                         printf(" %40s host if tno  %s  %s  %s\n", "", 
                                 $elm[4], $elm[6], $elm[5]) if ($showelem);
                          $typ = $elm[4];
                          @oid = decodetableoid( $elm[6] );
                          $nam = decodename( $elm[5] );
                          $perm = $elm[3];
                     } elsif ( $elm[0] eq 'tnos' ) {
-                         printf(" %40s host dev tnos %s  %s  %s\n", "", 
+                         printf(" %40s host if tnos %s  %s  %s\n", "", 
                                 $elm[4], $elm[6], $elm[5]) if ($showelem);
                          $typ = $elm[4];
                          @oid = decodetableoid( $elm[6] );
                          $nam = decodename( $elm[5] );
-                         $dim = decodedim( $elm[7] );
+                         $dim = decodedim( $elm[7] ); $dimtype = "strsize";
                          $perm = $elm[3];
                     } elsif ( $elm[0] eq 'tnoe' ) {
-                         printf(" %40s host dev tnoe %s  %s  %s\n", "", 
+                         printf(" %40s host if tnoe %s  %s  %s\n", "", 
                                 $elm[4], $elm[6], $elm[5]) if ($showelem);
-                         $typ = $elm[4]."Enum";
+                         $typ = $elm[4];
                          @oid = decodetableoid( $elm[6] );
                          $nam = decodename( $elm[5] );
+                         $dim = $elm[7]; $dimtype = "enum";
+                         $perm = $elm[3];
+                    } elsif ( $elm[0] eq 'tnor' ) {
+                         printf(" %40s host if tnor %s  %s  %s\n", "", 
+                                $elm[4], $elm[6], $elm[5]) if ($showelem);
+                         $typ = $elm[4];
+                         @oid = decodetableoid( $elm[6] );
+                         $nam = decodename( $elm[5] );
+                         $dim = $elm[7]; $dimtype = "intrange";
                          $perm = $elm[3];
                     } else {
                         $state = 9;
                     }
                     if ( isvalidoid(@oid) ) {
-                        printf(" %d, %d, %d, %d, %d, %s, %s, %s\n",
+                        print $fh sprintf(
+                            " %s %d, %d, %d, %d, %d, %s, %s, %s, \"%s\" %s\n",
+                                " host_if_def(", 
                                 $perm, $oid[0], $oid[1], $oid[2], $oid[3], 
-                                $typ, $nam, $dim);
+                                $typ, $nam, $dimtype, $dim, ")");
                     }
                 } elsif ( $state == 6 ) {
                         $state = 9;
@@ -440,12 +505,13 @@ printf " sizes %d %d\n\n", scalar(@{$flat}), scalar(@{$flat2});
                 die " Error: Unknown element\n";
             }
         }
+        close $fh;
     }
 
-printf("host if dev group:\n");
+printf("host dev group:\n");
 walkflathostdev('interfaces', $flat);
 
-printf("host if table group:\n");
+printf("host if group:\n");
 walkflathostif('interfaces', $flat);
 
 exit 0;

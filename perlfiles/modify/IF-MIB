@@ -994,7 +994,7 @@ Unsigned16 ::= INTEGER (0..65535)
         }
 
    ifStackHigherLayer  OBJECT-TYPE
-        SYNTAX        Integer32
+        SYNTAX        Integer32 (1..7)
         MAX-ACCESS    not-accessible
         STATUS        current
         DESCRIPTION
@@ -1008,7 +1008,7 @@ Unsigned16 ::= INTEGER (0..65535)
 
 
    ifStackLowerLayer  OBJECT-TYPE
-        SYNTAX        Integer32
+        SYNTAX        Integer32 (1..7)
         MAX-ACCESS    not-accessible
         STATUS        current
         DESCRIPTION

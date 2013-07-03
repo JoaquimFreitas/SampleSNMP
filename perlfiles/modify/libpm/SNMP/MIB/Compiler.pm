@@ -47,6 +47,7 @@ $DEBUG   = 1; # no longer used
 ######################################################################
 my $gen_string_size_cfg = 1;
 my $gen_table_size_cfg = 1;
+my $gen_integer_range_cfg = 1;
 my $gen_integer_enum_cfg = 1;
 my $gen_oid_cfg = 1;
 my $gen_prefix_lptan_cfg = 1;
@@ -490,6 +491,7 @@ sub initialize {
   $self->{'do_imports'} = 1;
   $self->{'gen_string_size'} = $gen_string_size_cfg;
   $self->{'gen_table_size'}  = $gen_table_size_cfg;
+  $self->{'gen_integer_range'}  = $gen_integer_range_cfg;
   $self->{'gen_integer_enum'}  = $gen_integer_enum_cfg;
   $self->{'gen_oid'}         = $gen_oid_cfg;
   $self->{'gen_prefix_lptan'} = $gen_prefix_lptan_cfg;
@@ -2515,6 +2517,24 @@ sub tree {
 	    }
 	  }
 	} # if ( gen_table_size )
+	if ( $self->{'gen_integer_range'} ) {
+	  my $px = ($self->{'gen_prefix_lptan'}?" A":"");
+	    if ( defined $self->{'nodes'}{$new}{'syntax'}{'range'} ) {
+	      ##print "\n  range for $gen_save_rawtype \n";
+	    }
+	  if ( defined $self->{'nodes'}{$new}{'syntax'} &&
+	       defined $self->{'nodes'}{$new}{'syntax'}{'range'} && 
+	       defined $self->{'nodes'}{$new}{'syntax'}{'range'}{'min'} && 
+	       defined $self->{'nodes'}{$new}{'syntax'}{'range'}{'max'} &&
+	       ( $gen_save_resolved eq 'Integer' || 
+	         $gen_save_resolved eq 'Int32' || $gen_save_resolved eq 'Int16' || 
+	         $gen_save_resolved eq 'Int8' || $gen_save_resolved eq 'UInt32' || 
+	         $gen_save_resolved eq 'UInt16' || $gen_save_resolved eq 'UInt8'   ) ) {
+	    $type .= sprintf "  %sIntRange[%04d-%04d]   ", $px, 
+	               $self->{'nodes'}{$new}{'syntax'}{'range'}{'min'}, 
+	               $self->{'nodes'}{$new}{'syntax'}{'range'}{'max'};
+	  }
+	}
 	if ( $self->{'gen_integer_enum'} ) {
 	  my $px = ($self->{'gen_prefix_lptan'}?" A":"");
 	    if ( defined $self->{'nodes'}{$new}{'syntax'}{'values'} ) {
