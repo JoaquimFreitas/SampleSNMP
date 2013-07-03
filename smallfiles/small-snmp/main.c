@@ -48,6 +48,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "snmp.h"
 #include "db.h"
 
+#define CFG_PORT (7161)
+
 // globals
 unsigned char community_read[] = "public";
 unsigned char community_write[] = "private";
@@ -113,7 +115,8 @@ void debugg(unsigned char *packet, int length) {
     }
 }
 
-void process_varbind_list(struct varbind_list_rx *varbind_list, unsigned char pdu_type) {
+void process_varbind_list(struct varbind_list_rx *varbind_list, 
+                                unsigned char pdu_type, int *rc) {
     int i;
     int idx;
     time_t t;
@@ -124,8 +127,10 @@ void process_varbind_list(struct varbind_list_rx *varbind_list, unsigned char pd
         else
             idx = search_oid(oid_db, varbind_list->varbind_list[i]->oid);
 
-        if (idx < 0)
+        if (idx < 0) {
+            *rc = 5; /* gen error */
             continue;
+        }
 
 
         /* Update some dynamic parameters */
@@ -194,7 +199,7 @@ int main() {
         exit(1);
     }
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(161);
+    server_addr.sin_port = htons(CFG_PORT);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     bzero(&(server_addr.sin_zero), 8);
     if (bind(sock, (struct sockaddr *) &server_addr, sizeof (struct sockaddr)) == -1) {
@@ -202,7 +207,7 @@ int main() {
         exit(1);
     }
     addr_len = sizeof (struct sockaddr);
-    printf("\nWaiting for SNMP-clients on port 161");
+    printf("\nWaiting for SNMP-clients on port %d", CFG_PORT);
     fflush(stdout);
 
     while (1) {
@@ -223,6 +228,9 @@ int main() {
 
             struct snmp_pdu_rx* snmp_pdu = create_snmp_pdu_rx(snmp_msg->snmp_pdu);
             if (snmp_pdu != NULL) {
+                int rc = 0; /* v1. 0:no error, 1:too big, 2:no such name
+                             *     3:bad value, 4:read only, 5: gen error.
+                             */
                 printf("\n");
                 disp_snmp_pdu_rx(snmp_pdu);
 
@@ -241,7 +249,10 @@ int main() {
                 printf("\n");
                 disp_varbind(varbind);
 
-                process_varbind_list(varbind_list, snmp_pdu->snmp_pdu_type);
+                process_varbind_list(varbind_list, snmp_pdu->snmp_pdu_type, &rc);
+                if ( rc != 0 ) {
+                    printf(" rc %d\n", rc);
+                }
 
                 printf("\n");
                 disp_varbind_list_rx(varbind_list);
@@ -252,7 +263,7 @@ int main() {
 
                 struct snmp_pdu_tx *snmp_pdu_tx =
                         create_snmp_pdu_tx(PDU_GET_RESP, snmp_pdu->request_id, 0x00,
-                        0x00, varbind_list_to_send);
+                        rc, varbind_list_to_send);
 
                 printf("\n");
 

@@ -101,6 +101,28 @@ public class SNMPManager {
         }
         throw new RuntimeException("GET timed out");
     }
+    public String getNextAsString(OID oid) throws IOException {
+        ResponseEvent event = getNext(new OID[]{oid});
+        PDU pdu = event.getResponse();
+        int rc = pdu.getErrorStatus();
+        if ( rc != 0 ) {
+            return "Error with code\n";
+        } else {
+            return pdu.get(0).getVariable().toString();
+        }
+    }
+    public ResponseEvent getNext(OID oids[]) throws IOException {
+        PDU pdu = new PDU();
+        for (OID oid : oids) {
+            pdu.add(new VariableBinding(oid));
+        }
+        pdu.setType(PDU.GETNEXT);
+        ResponseEvent event = snmp.send(pdu, getTarget(), null);
+        if (event != null) {
+            return event;
+        }
+        throw new RuntimeException("GETNEXT timed out");
+    }
 
     /**
      * This method returns a Target, which contains information about where the
@@ -115,7 +137,8 @@ public class SNMPManager {
         target.setAddress(targetAddress);
         target.setRetries(2);
         target.setTimeout(1500);
-        target.setVersion(SnmpConstants.version2c);
+        //target.setVersion(SnmpConstants.version2c);
+        target.setVersion(SnmpConstants.version1);
         return target;
     }
 }
