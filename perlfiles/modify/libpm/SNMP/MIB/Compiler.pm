@@ -2558,6 +2558,8 @@ sub tree {
 	    }
 	  }
 	} # if gen_integer_enum
+
+    }
 	if ( $self->{'gen_oid'} ) {
 	  my $px = ($self->{'gen_prefix_lptan'}?" A":"");
 	  if ( defined $self->{'nodes'}{$new} ) {
@@ -2565,8 +2567,6 @@ sub tree {
 	    $type .= $px.'Oid['.(defined($oid)?$oid:"nooid".$new).'] ';
 	  }
 	} # if ( gen_oid )
-
-    }
 	if ( $self->{'gen_prefix_lptan'} ) {
     $s .= " P".$access . " T".$type . " N".$new . '(' . $n . ")\n";
 	} else {

@@ -1,7 +1,7 @@
 OK compile file IF-MIB
 ifMIB
   |
-  +0-- P T NifMIBObjects(1)
+  +0-- P T AOid[1.3.6.1.2.1.31.1]  NifMIBObjects(1)
       |
       +1-- P---  T AOid[1.3.6.1.2.1.31.1.1]  NifXTable(1)
           |
@@ -52,27 +52,27 @@ ifMIB
               +3-- Pcr-  TUInt8       AEnum[1:other;3:nonVolatile;2:volatile;]    AOid[1.3.6.1.2.1.31.1.4.1.3]  NifRcvAddressType(3)
       +1-- P-r-  TTimeTcks  AOid[1.3.6.1.2.1.31.1.5]  NifTableLastChange(5)
       +1-- P-r-  TTimeTcks  AOid[1.3.6.1.2.1.31.1.6]  NifStackLastChange(6)
-  +0-- P T NifConformance(2)
+  +0-- P T AOid[1.3.6.1.2.1.31.2]  NifConformance(2)
       |
-      +1-- P T NifGroups(1)
+      +1-- P T AOid[1.3.6.1.2.1.31.2.1]  NifGroups(1)
           |
-          +2-- P T NifGeneralGroup(1)
-          +2-- P T NifFixedLengthGroup(2)
-          +2-- P T NifHCFixedLengthGroup(3)
-          +2-- P T NifPacketGroup(4)
-          +2-- P T NifHCPacketGroup(5)
-          +2-- P T NifVHCPacketGroup(6)
-          +2-- P T NifRcvAddressGroup(7)
-          +2-- P T NifTestGroup(8)
-          +2-- P T NifStackGroup(9)
-          +2-- P T NifGeneralInformationGroup(10)
-          +2-- P T NifStackGroup2(11)
-          +2-- P T NifOldObjectsGroup(12)
-          +2-- P T NifCounterDiscontinuityGroup(13)
-      +1-- P T NifCompliances(2)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.1]  NifGeneralGroup(1)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.2]  NifFixedLengthGroup(2)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.3]  NifHCFixedLengthGroup(3)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.4]  NifPacketGroup(4)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.5]  NifHCPacketGroup(5)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.6]  NifVHCPacketGroup(6)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.7]  NifRcvAddressGroup(7)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.8]  NifTestGroup(8)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.9]  NifStackGroup(9)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.10]  NifGeneralInformationGroup(10)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.11]  NifStackGroup2(11)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.12]  NifOldObjectsGroup(12)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.1.13]  NifCounterDiscontinuityGroup(13)
+      +1-- P T AOid[1.3.6.1.2.1.31.2.2]  NifCompliances(2)
           |
-          +2-- P T NifCompliance(1)
-          +2-- P T NifCompliance2(2)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.2.1]  NifCompliance(1)
+          +2-- P T AOid[1.3.6.1.2.1.31.2.2.2]  NifCompliance2(2)
 interfaces
   |
   +0-- P-r-  TInt8      AOid[1.3.6.1.2.1.2.1]  NifNumber(1)

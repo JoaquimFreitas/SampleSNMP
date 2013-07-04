@@ -237,7 +237,7 @@ walktree($ret, $flat);
             push @{$retref}, $blk[$i];
             if ( $elm[0] eq "name" || $elm[0] eq 'nao' || $elm[0] eq 'nor' || 
                  $elm[0] eq 'norx' || $elm[0] eq 'tno' || 
-                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe'   ) {
+                 $elm[0] eq 'tnos' || $elm[0] eq 'tnoe' || $elm[0] eq 'tnor' ) {
                 showelems(@elm) if ( $showwalk );
             } else {
                 printf(" Error: Unknown element : %s\n", $elm[0]);
@@ -344,6 +344,21 @@ if ( 0 ) { #walk through flat, clone into flat2, then print the sizes of them
                 }
                 if ( $state == 1 &&   # look for name interfaces.ifNumber
                      $elm[0] eq "tno" && $elm[5] =~ m/^.*\.ifNumber\s*$/ ) {
+
+                    my $fh2 = undef;
+                    my $ofile2 = "hostdevmacro.h";
+                    my $rc2 = open($fh2, ">", $ofile2);
+                    if ( ! $rc2 ) {
+                        print "Error open file $ofile2\n";
+                        die "Error open file $ofile2\n";
+                    }
+                    print $fh2 sprintf("/*\n * hostdevmacro.h\n */\n");
+                    print $fh2 sprintf("#define HOST_PREFIX_OID (%s)\n", 
+                                                        $cfg_skip_oid_prefix);
+                    print $fh2 sprintf("#define HOSTDEV_IFN_OID (%s)\n", 
+                                                                     $elm[6]);
+                    close $fh2;
+
                     $state = 6;
                     $levelbase = $elm[2];
                 }
@@ -444,6 +459,19 @@ if ( 0 ) { #walk through flat, clone into flat2, then print the sizes of them
                 } elsif ( $state == 2 &&   # look for ifEntry
                           $elm[0] eq "nor" && 
                           $elm[4] =~ m/^\s*$kwrd\..*ifEntry\s*$/ ) {
+
+                    my $fh2 = undef;
+                    my $ofile2 = "hostifmacro.h";
+                    my $rc2 = open($fh2, ">", $ofile2);
+                    if ( ! $rc2 ) {
+                        print "Error open file $ofile2\n";
+                        die "Error open file $ofile2\n";
+                    }
+                    print $fh2 sprintf("/*\n * hostifmacro.h\n */\n");
+                    print $fh2 sprintf("#define HOSTDEV_IFTABLE_OID (%s)\n", 
+                                                                     $elm[5]);
+                    close $fh2;
+
                     $state = 6;
                     $levelbase = $elm[2];
                 } elsif ( $state == 6 && 
@@ -521,17 +549,15 @@ __END__
 ##########################################################################
 
 host if dev spec:
- name  75   2   8          ifMIB.ifConformance.ifCompliances.ifCompliance2
+ nao  75   2   8          ifMIB.ifConformance.ifCompliances.ifCompliance2                    .31.2.2.2  
  tno   78   0   1 Int8     interfaces.ifNumber                                                .2.1       
- name  79   0   0          interfaces.ifTable
+ nao  79   0   0          interfaces.ifTable                                                 .2.2       
  nor  81   1   0          interfaces.ifTable.ifEntry                                         .2.2.1      1 norange ifIndex
  tno   83   2   1 Int32    interfaces.ifTable.ifEntry.ifIndex                                 .2.2.1.1   
  tnos  84   2   1 String   interfaces.ifTable.ifEntry.ifDescr                                 .2.2.1.2    0000-0255
 
-
 host if table spec:
-
- name  79   0   0          interfaces.ifTable
+ nao  79   0   0          interfaces.ifTable                                                 .2.2       
  nor  81   1   0          interfaces.ifTable.ifEntry                                         .2.2.1      1 norange ifIndex
  tno   83   2   1 Int32    interfaces.ifTable.ifEntry.ifIndex                                 .2.2.1.1   
  tnos  84   2   1 String   interfaces.ifTable.ifEntry.ifDescr                                 .2.2.1.2    0000-0255
