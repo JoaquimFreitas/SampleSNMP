@@ -105,8 +105,9 @@ public class SNMPManager {
         ResponseEvent event = getNext(new OID[]{oid});
         PDU pdu = event.getResponse();
         int rc = pdu.getErrorStatus();
+        int rcidx = pdu.getErrorIndex();
         if ( rc != 0 ) {
-            return "Error with code\n";
+            return String.format("Error with code %d index %d\n", rc, rcidx);
         } else {
             return pdu.get(0).getVariable().toString();
         }

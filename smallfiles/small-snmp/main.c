@@ -262,8 +262,8 @@ int main() {
                         create_varbind_list_tx(varbind_list);
 
                 struct snmp_pdu_tx *snmp_pdu_tx =
-                        create_snmp_pdu_tx(PDU_GET_RESP, snmp_pdu->request_id, 0x00,
-                        rc, varbind_list_to_send);
+                        create_snmp_pdu_tx(PDU_GET_RESP, snmp_pdu->request_id, 
+                        rc, 0x00, varbind_list_to_send);
 
                 printf("\n");
 
